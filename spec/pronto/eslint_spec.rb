@@ -161,8 +161,10 @@ module Pronto
     end
 
     describe '#eslint_command_line' do
+      include_context 'eslintignore repo'
       subject(:eslint_command_line) { eslint.send(:eslint_command_line, path) }
       let(:path) { '/some/path.rb' }
+      let(:patches) { repo.diff('master') }
 
       it 'adds json output flag' do
         expect(eslint_command_line).to include('-f json')
@@ -195,6 +197,44 @@ module Pronto
         it 'includes the custom command line options' do
           eslint.read_config
           expect(eslint_command_line).to include('--my command --line opts')
+        end
+      end
+
+      context(
+        'with files to lint config that matches only .js',
+        config: { 'multi_project_folders' => ['project1'] }
+      ) do
+        let(:path) { '/project1/hello.js' }
+
+        it 'enters the project folder to run eslint' do
+          eslint.read_config
+          expect(eslint_command_line).to include('cd project1')
+        end
+      end
+
+      context(
+        'with files to lint config that matches only .js',
+        config: { 'multi_project_folders' => ['project1'] }
+      ) do
+        let(:path) { '/project2/hello.js' }
+
+        it 'does not enter any project folder' do
+          eslint.read_config
+          expect(eslint_command_line).not_to include('cd project2')
+          expect(eslint_command_line).not_to include('cd project1')
+        end
+      end
+    end
+
+    describe '#multi_project_folders' do
+      context(
+        'with files to lint config that matches only .js',
+        config: { 'multi_project_folders' => ['p1', 'p2'] }
+      ) do
+        it 'adds project1 and project2' do
+          eslint.read_config
+          expect(eslint.multi_project_folders).to include('p1')
+          expect(eslint.multi_project_folders).to include('p2')
         end
       end
     end
