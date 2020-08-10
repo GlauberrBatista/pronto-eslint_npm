@@ -6,10 +6,10 @@ require 'shellwords'
 module Pronto
   class ESLintNpm < Runner
     CONFIG_FILE = '.pronto_eslint_npm.yml'.freeze
-    CONFIG_KEYS = %w[eslint_executable files_to_lint cmd_line_opts].freeze
+    CONFIG_KEYS = %w[eslint_executable files_to_lint cmd_line_opts multi_project_folders].freeze
     SEVERITY_LEVELS = [nil, :warning, :error].freeze
 
-    attr_writer :eslint_executable, :cmd_line_opts
+    attr_writer :eslint_executable, :cmd_line_opts, :multi_project_folders
 
     def eslint_executable
       @eslint_executable || 'eslint'
@@ -25,6 +25,10 @@ module Pronto
 
     def files_to_lint=(regexp)
       @files_to_lint = regexp.is_a?(Regexp) && regexp || Regexp.new(regexp)
+    end
+
+    def multi_project_folders
+      @multi_project_folders || []
     end
 
     def config_options
@@ -89,6 +93,12 @@ module Pronto
     end
 
     def eslint_command_line(path)
+      relative_path = path.gsub(repo_path.to_s, '')
+      multi_project_folders.each do |project_path|
+        if relative_path.start_with?("/#{project_path}")
+          return "cd #{project_path} && #{eslint_executable} #{cmd_line_opts} #{Shellwords.escape(path)} -f json"
+        end
+      end
       "#{eslint_executable} #{cmd_line_opts} #{Shellwords.escape(path)} -f json"
     end
 
