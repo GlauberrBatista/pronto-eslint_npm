@@ -28,7 +28,7 @@ module Pronto
     end
 
     def multi_project_folders
-      @multi_project_folders || []
+      @multi_project_folders || {}
     end
 
     def config_options
@@ -94,9 +94,10 @@ module Pronto
 
     def eslint_command_line(path)
       relative_path = path.gsub(repo_path.to_s, '')
-      multi_project_folders.each do |project_path|
+      multi_project_folders.each do |project_path, additional_config|
         if relative_path.start_with?("/#{project_path}")
-          return "cd #{project_path} && #{eslint_executable} #{cmd_line_opts} #{Shellwords.escape(path)} -f json"
+          options = additional_config['cmd_line_opts'] || cmd_line_opts
+          return "cd #{project_path} && #{eslint_executable} #{options} #{Shellwords.escape(path)} -f json"
         end
       end
       "#{eslint_executable} #{cmd_line_opts} #{Shellwords.escape(path)} -f json"

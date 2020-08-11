@@ -201,8 +201,8 @@ module Pronto
       end
 
       context(
-        'with files to lint config that matches only .js',
-        config: { 'multi_project_folders' => ['project1'] }
+        'with files to lint config that matches the project folder',
+        config: { 'multi_project_folders' => {'project1' => {}} }
       ) do
         let(:path) { '/project1/hello.js' }
 
@@ -213,8 +213,8 @@ module Pronto
       end
 
       context(
-        'with files to lint config that matches only .js',
-        config: { 'multi_project_folders' => ['project1'] }
+        'with files to lint config that doesnt match any project',
+        config: { 'multi_project_folders' => {'project1' => {}} }
       ) do
         let(:path) { '/project2/hello.js' }
 
@@ -227,14 +227,43 @@ module Pronto
     end
 
     describe '#multi_project_folders' do
+      include_context 'eslintignore repo'
+      let(:patches) { repo.diff('master') }
+      subject(:eslint_command_line) { eslint.send(:eslint_command_line, path) }
       context(
-        'with files to lint config that matches only .js',
-        config: { 'multi_project_folders' => ['p1', 'p2'] }
+        'with config to load different projects',
+        config: { 'multi_project_folders' => {'p1' => {}, 'p2' => {}} }
       ) do
         it 'adds project1 and project2' do
           eslint.read_config
           expect(eslint.multi_project_folders).to include('p1')
           expect(eslint.multi_project_folders).to include('p2')
+        end
+      end
+
+      context(
+        'with config to load command line options from project configuration',
+        config: { 'multi_project_folders' => {'p1' => {'cmd_line_opts' => '--extra'}} }
+      ) do
+        let(:path) { '/p1/path.rb' }
+
+        it 'uses command line from project configuration' do
+          eslint.read_config
+          expect(eslint.multi_project_folders).to include('p1')
+          expect(eslint_command_line).to include('--extra')
+        end
+      end
+
+      context(
+        'with config to load project configuration but uses default command line options',
+        config: { 'multi_project_folders' => {'p1' => {}}, 'cmd_line_opts' => '--default' }
+      ) do
+        let(:path) { '/project1/path.rb' }
+
+        it 'uses command line from project configuration' do
+          eslint.read_config
+          expect(eslint.multi_project_folders).to include('p1')
+          expect(eslint_command_line).to include('--default')
         end
       end
     end
