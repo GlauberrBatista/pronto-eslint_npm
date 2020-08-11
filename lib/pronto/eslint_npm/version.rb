@@ -2,6 +2,6 @@
 
 module Pronto
   module ESLintNpmVersion
-    VERSION = '0.11'.freeze
+    VERSION = '0.11.1'.freeze
   end
 end
