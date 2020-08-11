@@ -40,7 +40,8 @@ Example configuration to call custom eslint executable and only lint files endin
 eslint_executable: '/my/custom/node/path/.bin/eslint'
 files_to_lint: '\.my_custom_extension$'
 cmd_line_opts: '--ext .html,.js,.es6'
-multi_project_folders: 
-  - project1
-  - project2
+multi_project_folders:
+  project1: {}
+  project2:
+    ccmd_line_opts: '--ext .js' # will override the default cmd_line_opts
 ```
